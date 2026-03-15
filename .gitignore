@@ -21,3 +21,13 @@ node_modules
 
 # cli
 dist
+
+# env files
+.env
+.env.*
+*.key
+
+# foundry
+cache/
+out/
+broadcast/

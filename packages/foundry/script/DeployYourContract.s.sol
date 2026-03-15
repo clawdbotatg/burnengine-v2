@@ -1,30 +1,24 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "./DeployHelpers.s.sol";
-import "../contracts/YourContract.sol";
+import "../contracts/BurnEngineV2.sol";
 
-/**
- * @notice Deploy script for YourContract contract
- * @dev Inherits ScaffoldETHDeploy which:
- *      - Includes forge-std/Script.sol for deployment
- *      - Includes ScaffoldEthDeployerRunner modifier
- *      - Provides `deployer` variable
- * Example:
- * yarn deploy --file DeployYourContract.s.sol  # local anvil chain
- * yarn deploy --file DeployYourContract.s.sol --network optimism # live network (requires keystore)
- */
 contract DeployYourContract is ScaffoldETHDeploy {
-    /**
-     * @dev Deployer setup based on `ETH_KEYSTORE_ACCOUNT` in `.env`:
-     *      - "scaffold-eth-default": Uses Anvil's account #9 (0xa0Ee7A142d267C1f36714E4a8F75612F20a79720), no password prompt
-     *      - "scaffold-eth-custom": requires password used while creating keystore
-     *
-     * Note: Must use ScaffoldEthDeployerRunner modifier to:
-     *      - Setup correct `deployer` account and fund it
-     *      - Export contract addresses & ABIs to `nextjs` packages
-     */
+    // Base mainnet addresses
+    address constant CLANKER_FEE_LOCKER = 0xF3622742b1E446D92e45E22923Ef11C2fcD55D68;
+    address constant UNISWAP_ROUTER = 0x2626664c2603336E57B271c5C0b26F421741e481;
+    address constant POOL = 0xd013725b904e76394A3aB0334Da306C505D778F8;
+    address constant WETH = 0x4200000000000000000000000000000000000006;
+    address constant TUSD = 0x3d5e487B21E0569048c4D1A60E98C36e1B09DB07;
+
     function run() external ScaffoldEthDeployerRunner {
-        new YourContract(deployer);
+        new BurnEngineV2(
+            CLANKER_FEE_LOCKER,
+            UNISWAP_ROUTER,
+            POOL,
+            WETH,
+            TUSD
+        );
     }
 }
