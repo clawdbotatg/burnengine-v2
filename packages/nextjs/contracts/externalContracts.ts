@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const externalContracts = {
   8453: {
     BurnEngineV2: {
-      address: "0x0000000000000000000000000000000000000000", // TODO: Update after deployment
+      address: "0xb9Ca0A8c39A06892a205d173F95424D5AccC141f",
       abi: [
         {
           type: "constructor",

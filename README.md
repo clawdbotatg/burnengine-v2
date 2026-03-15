@@ -6,6 +6,12 @@ V2 fixes the permanent fund-lock risk of V1's hardcoded 3% slippage by introduci
 
 **No owner. No admin. No pause. No upgrade. Walkaway-safe.**
 
+## Live
+
+- **Contract:** [`0xb9Ca0A8c39A06892a205d173F95424D5AccC141f`](https://base.blockscout.com/address/0xb9ca0a8c39a06892a205d173f95424d5accc141f) (Base mainnet)
+- **App:** [https://community.bgipfs.com/ipfs/bafybeiguuedffvpye4mmwqeoorapu5fdsy3mokgxiiw634fo4ub5fmogoa/](https://community.bgipfs.com/ipfs/bafybeiguuedffvpye4mmwqeoorapu5fdsy3mokgxiiw634fo4ub5fmogoa/)
+- **Deployer:** `0x472C382550780cD30e1D27155b96Fa4b63d9247e` (clawdheart.eth)
+
 ## How It Works
 
 ```
@@ -63,36 +69,29 @@ burnEngine.getCurrentPrice(); // Current pool price
 ## Security
 
 - **ReentrancyGuard** on all external entry points
-- **CEI pattern** maintained throughout
+- **CEI pattern** — state updates before external interactions
 - **forceApprove** with exact amounts per cycle (no infinite approvals)
 - **slot0 price oracle** — acceptable for a burn engine where output goes to 0xdead. Small chunks make sandwich attacks economically irrational on Base
 - **Liquidity manipulation** — CHUNK_FACTOR = 10 provides 10x safety margin against inflated `liquidity()` reads
 - **Zero liquidity** — swap skipped gracefully, existing ₸USD still burns, WETH sits safely
 - **Dust threshold** — MIN_SWAP_AMOUNT (0.001 WETH) prevents gas waste on tiny amounts
+- **41 tests** — 28 unit, 8 fork (live Base state), 5 invariant
 
 ## Stack
 
-- **Solidity** 0.8.20
-- **Foundry** (forge test, forge script, forge verify)
+- **Solidity** 0.8.20 · **Foundry** · **Scaffold-ETH 2**
 - **OpenZeppelin** (ReentrancyGuard, SafeERC20, IERC20)
-- **Base L2**
-- **Uniswap V3** (SwapRouter02, Pool)
+- **Base L2** · **Uniswap V3**
 
 ## Build & Test
 
 ```bash
-forge install
-forge build
+yarn install
+cd packages/foundry
 forge test -vvv
 
 # Fork tests against live Base state
-forge test --fork-url https://base-mainnet.g.alchemy.com/v2/YOUR_KEY -vvv
-```
-
-## Deploy
-
-```bash
-forge script script/Deploy.s.sol --rpc-url BASE_RPC --broadcast --verify
+forge test --fork-url $BASE_RPC -vvv
 ```
 
 ## License
