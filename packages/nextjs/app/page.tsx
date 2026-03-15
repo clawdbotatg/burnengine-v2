@@ -1,20 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Address } from "@scaffold-ui/components";
+import { useFetchNativeCurrencyPrice } from "@scaffold-ui/hooks";
 import type { NextPage } from "next";
 import { formatEther } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import scaffoldConfig from "~~/scaffold.config";
 
 const BURN_ENGINE_ADDRESS = "0x0000000000000000000000000000000000000000"; // TODO: Update after deployment
 
 const Home: NextPage = () => {
-  const { address: connectedAddress } = useAccount();
+  const { address: connectedAddress, connector } = useAccount();
+  const chainId = useChainId();
+  const { switchChain, isPending: isSwitchingNetwork } = useSwitchChain();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [customSlippage, setCustomSlippage] = useState("300");
-  const [isExecuting, setIsExecuting] = useState(false);
-  const [isExecutingCustom, setIsExecutingCustom] = useState(false);
+  const { price: nativeCurrencyPrice } = useFetchNativeCurrencyPrice();
+
+  const targetChainId = scaffoldConfig.targetNetworks[0].id;
+  const wrongNetwork = connectedAddress && chainId !== targetChainId;
 
   // Read contract data
   const { data: statusData, isLoading: isLoadingStatus } = useScaffoldReadContract({
@@ -36,20 +43,62 @@ const Home: NextPage = () => {
   });
 
   // Write contract hooks
-  const { writeContractAsync: executeDefault } = useScaffoldWriteContract("BurnEngineV2");
-  const { writeContractAsync: executeCustom } = useScaffoldWriteContract("BurnEngineV2");
+  const { writeContractAsync: executeDefault, isPending: isExecuting } = useScaffoldWriteContract("BurnEngineV2");
+  const { writeContractAsync: executeCustom, isPending: isExecutingCustom } = useScaffoldWriteContract("BurnEngineV2");
+
+  // Mobile deep linking helper
+  const openWallet = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile || window.ethereum) return;
+
+    const allIds = [connector?.id, connector?.name, localStorage.getItem("wagmi.recentConnectorId")]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    let wcWallet = "";
+    try {
+      const wcKey = Object.keys(localStorage).find(k => k.startsWith("wc@2:client"));
+      if (wcKey) wcWallet = (localStorage.getItem(wcKey) || "").toLowerCase();
+    } catch {}
+    const search = `${allIds} ${wcWallet}`;
+
+    const schemes: [string[], string][] = [
+      [["rainbow"], "rainbow://"],
+      [["metamask"], "metamask://"],
+      [["coinbase", "cbwallet"], "cbwallet://"],
+      [["trust"], "trust://"],
+      [["phantom"], "phantom://"],
+    ];
+
+    for (const [keywords, scheme] of schemes) {
+      if (keywords.some(k => search.includes(k))) {
+        window.location.href = scheme;
+        return;
+      }
+    }
+  }, [connector]);
+
+  const writeAndOpen = useCallback(
+    <T,>(writeFn: () => Promise<T>): Promise<T> => {
+      const promise = writeFn();
+      setTimeout(openWallet, 2000);
+      return promise;
+    },
+    [openWallet],
+  );
 
   const handleExecuteDefault = async () => {
-    setIsExecuting(true);
     try {
-      await executeDefault({
-        functionName: "executeFullCycle",
-        args: [300n],
-      });
+      await writeAndOpen(() =>
+        executeDefault({
+          functionName: "executeFullCycle",
+          args: [300n],
+        }),
+      );
     } catch (e) {
       console.error("Execute failed:", e);
-    } finally {
-      setIsExecuting(false);
     }
   };
 
@@ -59,16 +108,15 @@ const Home: NextPage = () => {
       alert("Slippage must be between 1 and 10000 basis points");
       return;
     }
-    setIsExecutingCustom(true);
     try {
-      await executeCustom({
-        functionName: "executeFullCycle",
-        args: [slippageBps],
-      });
+      await writeAndOpen(() =>
+        executeCustom({
+          functionName: "executeFullCycle",
+          args: [slippageBps],
+        }),
+      );
     } catch (e) {
       console.error("Execute with custom slippage failed:", e);
-    } finally {
-      setIsExecutingCustom(false);
     }
   };
 
@@ -85,8 +133,15 @@ const Home: NextPage = () => {
 
   const formatPrice = (price: bigint | undefined) => {
     if (!price) return "...";
-    // Price is in 2^96 fixed point for TUSD/WETH ratio
     return formatEther(price);
+  };
+
+  const ethPrice = nativeCurrencyPrice || 0;
+
+  const formatEthWithUsd = (wei: bigint) => {
+    const ethVal = parseFloat(formatEther(wei));
+    const usd = ethVal * ethPrice;
+    return `${formatEther(wei)} ETH (~$${usd.toFixed(2)})`;
   };
 
   return (
@@ -142,7 +197,7 @@ const Home: NextPage = () => {
               {isLoadingStatus ? (
                 <span className="loading loading-spinner loading-sm"></span>
               ) : (
-                `${formatEther(wethRemaining)} ETH`
+                formatEthWithUsd(wethRemaining)
               )}
             </div>
           </div>
@@ -152,8 +207,10 @@ const Home: NextPage = () => {
             <div className="text-xl font-bold">
               {isLoadingChunk ? (
                 <span className="loading loading-spinner loading-sm"></span>
+              ) : chunkSize ? (
+                formatEthWithUsd(chunkSize)
               ) : (
-                `${chunkSize ? formatEther(chunkSize) : "0"} ETH`
+                "0 ETH (~$0.00)"
               )}
             </div>
           </div>
@@ -170,10 +227,25 @@ const Home: NextPage = () => {
           </div>
         </div>
 
-        {/* Execute Button */}
+        {/* Execute Button — Four-State Flow */}
         <div className="flex flex-col items-center gap-4 mb-8">
           {!connectedAddress ? (
-            <p className="text-base-content/60">Connect wallet to execute burn cycles</p>
+            <RainbowKitCustomConnectButton />
+          ) : wrongNetwork ? (
+            <button
+              className="btn btn-warning btn-lg w-full max-w-md"
+              onClick={() => switchChain({ chainId: targetChainId })}
+              disabled={isSwitchingNetwork}
+            >
+              {isSwitchingNetwork ? (
+                <>
+                  <span className="loading loading-spinner loading-sm mr-2" />
+                  Switching...
+                </>
+              ) : (
+                "Switch to Base"
+              )}
+            </button>
           ) : (
             <>
               <button
@@ -183,7 +255,7 @@ const Home: NextPage = () => {
               >
                 {isExecuting ? (
                   <>
-                    <span className="loading loading-spinner"></span>
+                    <span className="loading loading-spinner loading-sm mr-2" />
                     Executing Burn Cycle...
                   </>
                 ) : (
@@ -218,7 +290,7 @@ const Home: NextPage = () => {
                   >
                     {isExecutingCustom ? (
                       <>
-                        <span className="loading loading-spinner"></span>
+                        <span className="loading loading-spinner loading-sm mr-2" />
                         Executing...
                       </>
                     ) : (
