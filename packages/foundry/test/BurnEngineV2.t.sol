@@ -123,13 +123,13 @@ contract MockFeeLocker {
         shouldRevert = _shouldRevert;
     }
 
-    function claimFees(address, address) external {
+    function claimRewards(address token) external {
         if (shouldRevert) revert("no fees");
-        if (wethToGive > 0) {
+        if (token == address(weth) && wethToGive > 0) {
             weth.mint(msg.sender, wethToGive);
             wethToGive = 0;
         }
-        if (tusdToGive > 0) {
+        if (token == address(tusd) && tusdToGive > 0) {
             tusd.mint(msg.sender, tusdToGive);
             tusdToGive = 0;
         }
@@ -178,7 +178,7 @@ contract ReentrantFeeLocker {
         target = BurnEngineV2(_target);
     }
 
-    function claimFees(address, address) external {
+    function claimRewards(address) external {
         if (!attacked) {
             attacked = true;
             weth.mint(msg.sender, 1 ether);
@@ -690,8 +690,8 @@ contract BurnEngineV2ForkTest is Test {
     address constant WETH_BASE = 0x4200000000000000000000000000000000000006;
     address constant TUSD_BASE = 0x3d5e487B21E0569048c4D1A60E98C36e1B09DB07; // ₸USD on Base
     address constant UNISWAP_ROUTER_BASE = 0x2626664c2603336E57B271c5C0b26F421741e481; // SwapRouter02
-    // ClankerFeeLocker v4 - claimFees will revert for non-matching tokens, caught by try/catch
-    address constant CLANKER_FEE_LOCKER_BASE = 0xF3622742b1E446D92e45E22923Ef11C2fcD55D68;
+    // Clanker v3.1 fee locker - uses claimRewards(address token)
+    address constant CLANKER_FEE_LOCKER_BASE = 0x2A787b2362021cC3eEa3C24C4748a6cD5B687382;
 
     // WETH/₸USD pool on Base (1% fee tier) - verified via Uniswap V3 Factory
     address constant POOL_BASE = 0xd013725b904e76394A3aB0334Da306C505D778F8;

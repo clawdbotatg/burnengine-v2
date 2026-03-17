@@ -125,7 +125,9 @@ contract BurnEngineV2 is ReentrancyGuard {
         uint256 tusdBefore = TUSD.balanceOf(address(this));
 
         // 2. Claim fees (try/catch so we don't revert if nothing to claim)
-        try CLANKER_FEE_LOCKER.claimFees(address(WETH), address(TUSD)) {} catch {}
+        // Clanker v3.1 fee locker uses claimRewards(address token) — call separately for each token
+        try CLANKER_FEE_LOCKER.claimRewards(address(WETH)) {} catch {}
+        try CLANKER_FEE_LOCKER.claimRewards(address(TUSD)) {} catch {}
 
         // 3. Read balances after claim
         uint256 wethBalance = WETH.balanceOf(address(this));

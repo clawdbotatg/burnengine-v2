@@ -6,7 +6,7 @@ import "../contracts/BurnEngineV2.sol";
 
 contract DeployYourContract is ScaffoldETHDeploy {
     // Base mainnet addresses
-    address constant CLANKER_FEE_LOCKER = 0xF3622742b1E446D92e45E22923Ef11C2fcD55D68;
+    address constant CLANKER_FEE_LOCKER = 0x2A787b2362021cC3eEa3C24C4748a6cD5B687382;
     address constant UNISWAP_ROUTER = 0x2626664c2603336E57B271c5C0b26F421741e481;
     address constant POOL = 0xd013725b904e76394A3aB0334Da306C505D778F8;
     address constant WETH = 0x4200000000000000000000000000000000000006;
