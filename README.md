@@ -8,8 +8,8 @@ V2 fixes the permanent fund-lock risk of V1's hardcoded 3% slippage by introduci
 
 ## Live
 
-- **Contract:** [`0xb9Ca0A8c39A06892a205d173F95424D5AccC141f`](https://base.blockscout.com/address/0xb9ca0a8c39a06892a205d173f95424d5accc141f) (Base mainnet)
-- **App:** [https://community.bgipfs.com/ipfs/bafybeiguuedffvpye4mmwqeoorapu5fdsy3mokgxiiw634fo4ub5fmogoa/](https://community.bgipfs.com/ipfs/bafybeiguuedffvpye4mmwqeoorapu5fdsy3mokgxiiw634fo4ub5fmogoa/)
+- **Contract:** [`0x022688adcdc24c648f4efba76e42cd16bd0863ab`](https://basescan.org/address/0x022688adcdc24c648f4efba76e42cd16bd0863ab) (Base mainnet, Basescan verified)
+- **App:** [https://community.bgipfs.com/ipfs/bafybeig53oa3qwpvrgmu6ctww4i7beewghznk5ck3jovk7kddtzirdiumm/](https://community.bgipfs.com/ipfs/bafybeig53oa3qwpvrgmu6ctww4i7beewghznk5ck3jovk7kddtzirdiumm/)
 - **Deployer:** `0x472C382550780cD30e1D27155b96Fa4b63d9247e` (clawdheart.eth)
 
 ## How It Works

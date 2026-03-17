@@ -10,7 +10,7 @@ import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import scaffoldConfig from "~~/scaffold.config";
 
-const BURN_ENGINE_ADDRESS = "0xb9Ca0A8c39A06892a205d173F95424D5AccC141f";
+const BURN_ENGINE_ADDRESS = "0x022688adcdc24c648f4efba76e42cd16bd0863ab";
 
 const Home: NextPage = () => {
   const { address: connectedAddress, connector } = useAccount();
